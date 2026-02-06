@@ -1,1 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Analytics Tracker</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        nav button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        nav button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        nav button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        button.submit-btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        button.submit-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .workout-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .workout-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .workout-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .exercise-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #764ba2;
+        }
+
+        .exercise-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .exercise-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-item {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3c3;
+        }
+
+        .set-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .add-set-form {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .add-set-form input {
+            margin-bottom: 10px;
+        }
+
+        button.add-btn {
+            background: #764ba2;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        button.add-btn:hover {
+            background: #667eea;
+        }
+
+        button.remove-btn {
+            background: #f77;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const API_BASE = "http://localhost:8000/api";
+
+        // ============ Components ============
+
+        function Dashboard() {
+            const [view, setView] = useState("dashboard");
+            const [stats, setStats] = useState(null);
+            const [workouts, setWorkouts] = useState([]);
+            const [exercises, setExercises] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [message, setMessage] = useState(null);
+
+            useEffect(() => {
+                fetchStats();
+                fetchWorkouts();
+                fetchExercises();
+            }, []);
+
+            const fetchStats = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/stats/summary`);
+                    const data = await res.json();
+                    setStats(data);
+                } catch (error) {
+                    console.error("Error fetching stats:", error);
+                }
+            };
+
+            const fetchWorkouts = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/workouts`);
+                    const data = await res.json();
+                    setWorkouts(data);
+                } catch (error) {
+                    console.error("Error fetching workouts:", error);
+                }
+            };
+
+            const fetchExercises = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/exercises`);
+                    const data = await res.json();
+                    setExercises(data);
+                } catch (error) {
+                    console.error("Error fetching exercises:", error);
+                }
+            };
+
+            const handleWorkoutAdded = () => {
+                setMessage({ type: "success", text: "Workout saved successfully!" });
+                fetchStats();
+                fetchWorkouts();
+                fetchExercises();
+                setTimeout(() => setMessage(null), 3000);
+            };
+
+            return (
+                <div className="app-container">
+                    <header>
+                        <h1>💪 Workout Analytics Tracker
+                    </h1>
+                        <p>Track your workouts, monitor progress, and achieve your goals</p>
+                    </header>
+
+                    <nav>
+                        <button 
+                            className={view === "dashboard" ? "active" : ""} 
+                            onClick={() => setView("dashboard")}
+                        >
+                            📊 Dashboard
+                        </button>
+                        <button 
+                            className={view === "addWorkout" ? "active" : ""} 
+                            onClick={() => setView("addWorkout")}
+                        >
+                            ➕ Add Workout
+                        </button>
+                        <button 
+                            className={view === "analytics" ? "active" : ""} 
+                            onClick={() => setView("analytics")}
+                        >
+                            📈 Analytics
+                        </button>
+                        <button 
+                            className={view === "workouts" ? "active" : ""} 
+                            onClick={() => setView("workouts")}
+                        >
+                            📋 All Workouts
+                        </button>
+                    </nav>
+
+                    <div className="content">
+                        {message && (
+                            <div className={message.type === "success" ? "success" : "error"}>
+                                {message.text}
+                            </div>
+                        )}
+
+                        {view === "dashboard" && <DashboardView stats={stats} />}
+                        {view === "addWorkout" && <AddWorkoutView onWorkoutAdded={handleWorkoutAdded} />}
+                        {view === "analytics" && <AnalyticsView exercises={exercises} />}
+                        {view === "workouts" && <WorkoutsView workouts={workouts} />}
+                    </div>
+                </div>
+            );
+        }
+
+        function DashboardView({ stats }) {
+            if (!stats) return <div className="loading">Loading...</div>;
+
+            return (
+                <div>
+                    <h2>Overview</h2>
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h3>Total Workouts</h3>
+                            <div className="number">{stats.total_workouts}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Unique Exercises</h3>
+                            <div className="number">{stats.unique_exercises}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Total Volume</h3>
+                            <div className="number">{stats.total_volume.toLocaleString()}</div>
+                            <p style={{fontSize: '0.8em', marginTop: '10px'}}>kg × reps</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AddWorkoutView({ onWorkoutAdded }) {
+            const [formData, setFormData] = useState({
+                workout_title: "",
+                workout_date: new Date().toISOString().split('T')[0],
+                workout_time: "",
+                exercises: []
+            });
+
+            const [currentExercise, setCurrentExercise] = useState({
+                exercise_name: "",
+                muscle_group: "",
+                rest_time: "",
+                sets: []
+            });
+
+            const [currentSet, setCurrentSet] = useState({
+                weight: "",
+                reps: "",
+                rir: ""
+            });
+
+            const addSet = () => {
+                if (currentSet.weight && currentSet.reps) {
+                    setCurrentExercise({
+                        ...currentExercise,
+                        sets: [...currentExercise.sets, {
+                            weight: parseFloat(currentSet.weight),
+                            reps: parseInt(currentSet.reps),
+                            rir: currentSet.rir ? parseInt(currentSet.rir) : null
+                        }]
+                    });
+                    setCurrentSet({ weight: "", reps: "", rir: "" });
+                }
+            };
+
+            const addExercise = () => {
+                if (currentExercise.exercise_name && currentExercise.muscle_group && currentExercise.sets.length > 0) {
+                    setFormData({
+                        ...formData,
+                        exercises: [...formData.exercises, currentExercise]
+                    });
+                    setCurrentExercise({
+                        exercise_name: "",
+                        muscle_group: "",
+                        rest_time: "",
+                        sets: []
+                    });
+                }
+            };
+
+            const removeExercise = (index) => {
+                setFormData({
+                    ...formData,
+                    exercises: formData.exercises.filter((_, i) => i !== index)
+                });
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                const payload = {
+                    ...formData,
+                    workout_time: formData.workout_time ? parseInt(formData.workout_time) : null
+                };
+
+                try {
+                    const res = await fetch(`${API_BASE}/workouts`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        setFormData({
+                            workout_title: "",
+                            workout_date: new Date().toISOString().split('T')[0],
+                            workout_time: "",
+                            exercises: []
+                        });
+                        onWorkoutAdded();
+                    } else {
+                        alert("Error saving workout");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Error saving workout");
+                }
+            };
+
+            return (
+                <div>
+                    <h2>Add New Workout</h2>
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Workout Title</label>
+                                <input 
+                                    type="text" 
+                                    value={formData.workout_title}
+                                    onChange={(e) => setFormData({...formData, workout_title: e.target.value})}
+                                    placeholder="e.g., Push Day"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Date</label>
+                                <input 
+                                    type="date" 
+                                    value={formData.workout_date}
+                                    onChange={(e) => setFormData({...formData, workout_date: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Duration (minutes)</label>
+                                <input 
+                                    type="number" 
+                                    value={formData.workout_time}
+                                    onChange={(e) => setFormData({...formData, workout_time: e.target.value})}
+                                    placeholder="Optional"
+                                />
+                            </div>
+                        </div>
+
+                        <h3 style={{marginTop: '30px', marginBottom: '20px', color: '#667eea'}}>Exercises</h3>
+                        
+                        {formData.exercises.map((ex, idx) => (
+                            <div key={idx} className="exercise-item">
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start'}}>
+                                    <div>
+                                        <h4>{ex.exercise_name}</h4>
+                                        <p style={{color: '#666', fontSize: '0.9em'}}>{ex.muscle_group}</p>
+                                        <div style={{marginTop: '10px'}}>
+                                            {ex.sets.map((set, sidx) => (
+                                                <div key={sidx} className="set-item">
+                                                    Set {sidx + 1}: {set.weight}kg × {set.reps} reps {set.rir ? `(RIR: ${set.rir})` : ''}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        className="remove-btn"
+                                        onClick={() => removeExercise(idx)}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div style={{background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px'}}>
+                            <h4>Add Exercise</h4>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Exercise Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={currentExercise.exercise_name}
+                                        onChange={(e) => setCurrentExercise({...currentExercise, exercise_name: e.target.value})}
+                                        placeholder="e.g., Bench Press"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Muscle Group</label>
+                                    <select 
+                                        value={currentExercise.muscle_group}
+                                        onChange={(e) => setCurrentExercise({...currentExercise, muscle_group: e.target.value})}
+                                    >
+                                        <option value="">Select...</option>
+                                        <option>Chest</option>
+                                        <option>Back</option>
+                                        <option>Shoulders</option>
+                                        <option>Legs</option>
+                                        <option>Arms</option>
+                                        <option>Core</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Rest Time (min)</label>
+                                    <input 
+                                        type="number" 
+                                        value={currentExercise.rest_time}
+                                        onChange={(e) => setCurrentExercise({...currentExercise, rest_time: e.target.value})}
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{background: '#fff', padding: '15px', borderRadius: '5px', marginBottom: '15px'}}>
+                                <h5>Add Sets</h5>
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Weight (kg)</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.5"
+                                            value={currentSet.weight}
+                                            onChange={(e) => setCurrentSet({...currentSet, weight: e.target.value})}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Reps</label>
+                                        <input 
+                                            type="number" 
+                                            value={currentSet.reps}
+                                            onChange={(e) => setCurrentSet({...currentSet, reps: e.target.value})}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>RIR (optional)</label>
+                                        <input 
+                                            type="number" 
+                                            value={currentSet.rir}
+                                            onChange={(e) => setCurrentSet({...currentSet, rir: e.target.value})}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </div>
+                                <button type="button" className="add-btn" onClick={addSet}>
+                                    Add Set
+                                </button>
+                            </div>
+
+                            {currentExercise.sets.length > 0 && (
+                                <div>
+                                    <strong>Sets added: {currentExercise.sets.length}</strong>
+                                    {currentExercise.sets.map((set, idx) => (
+                                        <div key={idx} className="set-item">
+                                            Set {idx + 1}: {set.weight}kg × {set.reps} reps {set.rir ? `(RIR: ${set.rir})` : ''}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button 
+                                type="button" 
+                                className="add-btn" 
+                                onClick={addExercise}
+                                style={{marginTop: '15px', background: '#667eea'}}
+                            >
+                                Add Exercise to Workout
+                            </button>
+                        </div>
+                    </form>
+
+                    <button 
+                        type="submit" 
+                        className="submit-btn"
+                        onClick={handleSubmit}
+                        disabled={formData.exercises.length === 0}
+                        style={{opacity: formData.exercises.length === 0 ? 0.5 : 1}}
+                    >
+                        Save Workout
+                    </button>
+                </div>
+            );
+        }
+
+        function AnalyticsView({ exercises }) {
+            const [selectedExercise, setSelectedExercise] = useState("");
+            const [analytics, setAnalytics] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (exercises.length > 0 && !selectedExercise) {
+                    setSelectedExercise(exercises[0]);
+                }
+            }, [exercises]);
+
+            useEffect(() => {
+                if (selectedExercise) {
+                    fetchAnalytics();
+                }
+            }, [selectedExercise]);
+
+            const fetchAnalytics = async () => {
+                setLoading(true);
+                try {
+                    const res = await fetch(`${API_BASE}/analytics/${selectedExercise}`);
+                    const data = await res.json();
+                    setAnalytics(data);
+                    drawChart(data);
+                } catch (error) {
+                    console.error("Error fetching analytics:", error);
+                    setAnalytics(null);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const drawChart = (data) => {
+                if (!chartRef.current) return;
+
+                const ctx = chartRef.current.getContext('2d');
+                
+                if (chartInstance.current) {
+                    chartInstance.current.destroy();
+                }
+
+                chartInstance.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.timeseries.map(point => point.date),
+                        datasets: [{
+                            label: '1RM (kg)',
+                            data: data.timeseries.map(point => point.oneRM),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    color: '#666'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#666'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            return (
+                <div>
+                    <h2>Exercise Analytics</h2>
+                    
+                    <div className="form-group" style={{marginBottom: '30px'}}>
+                        <label>Select Exercise</label>
+                        <select 
+                            value={selectedExercise}
+                            onChange={(e) => setSelectedExercise(e.target.value)}
+                        >
+                            {exercises.map(ex => (
+                                <option key={ex} value={ex}>{ex}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {loading ? (
+                        <div className="loading">Loading analytics...</div>
+                    ) : analytics ? (
+                        <div>
+                            <div className="stats-grid" style={{marginBottom: '30px'}}>
+                                <div className="stat-card">
+                                    <h3>Latest 1RM</h3>
+                                    <div className="number">{analytics.latest_1rm?.toFixed(1)}</div>
+                                    <p style={{fontSize: '0.8em', marginTop: '10px'}}>kg</p>
+                                </div>
+                                <div className="stat-card">
+                                    <h3>Plateau Detected</h3>
+                                    <div className="number" style={{fontSize: '1.5em'}}>
+                                        {analytics.plateau_detected ? '⚠️' : '✅'}
+                                    </div>
+                                </div>
+                                <div className="stat-card">
+                                    <h3>Progression Slope</h3>
+                                    <div className="number">{analytics.slope?.toFixed(2)}</div>
+                                    <p style={{fontSize: '0.8em', marginTop: '10px'}}>/workout</p>
+                                </div>
+                            </div>
+
+                            <h3 style={{marginBottom: '20px', color: '#667eea'}}>Progression Chart</h3>
+                            <div className="chart-container">
+                                <canvas ref={chartRef}></canvas>
+                            </div>
+
+                            {analytics.plateau_detected && (
+                                <div className="error">
+                                    <strong>⚠️ Plateau Detected!</strong> Your progression for this exercise seems to have plateaued. Consider increasing volume, intensity, or varying your training.
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="error">No data available for this exercise.</div>
+                    )}
+                </div>
+            );
+        }
+
+        function WorkoutsView({ workouts }) {
+            if (workouts.length === 0) return <div className="loading">No workouts yet</div>;
+
+            return (
+                <div>
+                    <h2>All Workouts</h2>
+                    {workouts.map((workout, idx) => (
+                        <div key={idx} className="workout-item">
+                            <h3>{workout.workout_title}</h3>
+                            <div className="workout-date">📅 {workout.workout_date}</div>
+                            {workout.workout_time && (
+                                <div className="workout-date">⏱️ {workout.workout_time} minutes</div>
+                            )}
+                            
+                            <div style={{marginTop: '15px'}}>
+                                {workout.exercises.map((exercise, eidx) => (
+                                    <div key={eidx} className="exercise-item">
+                                        <h4>{exercise.exercise_name}</h4>
+                                        <div className="exercise-detail">
+                                            <div className="detail-item">
+                                                <span className="detail-label">Muscle:</span> {exercise.muscle_group}
+                                            </div>
+                                            {exercise.rest_time && (
+                                                <div className="detail-item">
+                                                    <span className="detail-label">Rest:</span> {exercise.rest_time} min
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div style={{marginTop: '10px'}}>
+                                            {exercise.sets.map((set, sidx) => (
+                                                <div key={sidx} className="set-item">
+                                                    Set {sidx + 1}: {set.weight}kg × {set.reps} reps {set.rir ? `(RIR: ${set.rir})` : ''}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById("root"));
+    </script>
+</body>
+</html>

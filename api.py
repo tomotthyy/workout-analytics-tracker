@@ -8,7 +8,7 @@ from typing import List, Optional
 import numpy as np
 from models import WorkoutEntry, ExerciseEntry, SetEntry
 from storage import load_workouts, save_workout
-from main import get_1rm_timeseries_obj, detect_plateau, weekly_volume_by_muscle, estimate_1rm
+from analytics import get_1rm_timeseries_obj, detect_plateau, weekly_volume_by_muscle, estimate_1rm
 from pathlib import Path
 import json
 
@@ -272,3 +272,4 @@ def get_summary_stats():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
